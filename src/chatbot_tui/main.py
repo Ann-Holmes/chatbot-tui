@@ -3,7 +3,6 @@
 import asyncio
 import os
 import sys
-from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -148,7 +147,11 @@ async def run_chat_loop(
             # Stream assistant response
             try:
                 ui.clear_streaming_content()
-                live.update(ui._render_conversation(session_manager.current_session, streaming=True))
+                live.update(
+                    ui._render_conversation(
+                        session_manager.current_session, streaming=True
+                    )
+                )
 
                 assistant_content = ""
                 messages = session_manager.current_session.get_messages_for_api()
@@ -156,11 +159,17 @@ async def run_chat_loop(
                 async for chunk in llm_client.chat_stream(messages):
                     assistant_content += chunk
                     ui.add_streaming_content(chunk)
-                    live.update(ui._render_conversation(session_manager.current_session, streaming=True))
+                    live.update(
+                        ui._render_conversation(
+                            session_manager.current_session, streaming=True
+                        )
+                    )
 
                 # Add assistant message to session
                 if assistant_content:
-                    assistant_message = Message(role="assistant", content=assistant_content)
+                    assistant_message = Message(
+                        role="assistant", content=assistant_content
+                    )
                     session_manager.current_session.add_message(assistant_message)
                     session_manager.save_session(session_manager.current_session)
 

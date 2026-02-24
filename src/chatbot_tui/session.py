@@ -23,7 +23,9 @@ class Message:
     @classmethod
     def from_dict(cls, data: Dict[str, str]) -> "Message":
         """Create message from dictionary."""
-        return cls(role=data["role"], content=data["content"], timestamp=data["timestamp"])
+        return cls(
+            role=data["role"], content=data["content"], timestamp=data["timestamp"]
+        )
 
 
 @dataclass

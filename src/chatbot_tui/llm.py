@@ -1,11 +1,12 @@
 """LLM client module using OpenAI SDK."""
 
 from openai import AsyncOpenAI, APIError, APITimeoutError
-from typing import AsyncGenerator, List, Dict, Any
+from typing import AsyncGenerator, List, Dict
 
 
 class LLMError(Exception):
     """Custom exception for LLM-related errors."""
+
     pass
 
 

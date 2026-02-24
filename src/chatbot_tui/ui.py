@@ -33,9 +33,6 @@ class ChatUI:
         Returns:
             Formatted Text object
         """
-        # Get terminal width for nice formatting
-        width = min(80, getattr(self.console, 'width', 80) - 4)
-
         # Create styled text
         text = Text()
         text.append("You", style="bold cyan")
@@ -79,9 +76,7 @@ class ChatUI:
         except (ValueError, TypeError):
             return "??:??"
 
-    def _render_conversation(
-        self, session: Session, streaming: bool = False
-    ) -> Panel:
+    def _render_conversation(self, session: Session, streaming: bool = False) -> Panel:
         """Render the conversation for display in Live view.
 
         Args:
@@ -122,9 +117,10 @@ class ChatUI:
 
         # Use Group to combine renderables instead of fit=False
         from rich.console import Group
+
         return Panel(
             Group(*content),
-            title=f":speech_balloon: Chat",
+            title=":speech_balloon: Chat",
             title_align="left",
             border_style="blue",
             padding=(0, 1),
@@ -169,7 +165,9 @@ class ChatUI:
         Args:
             message: Info message to display
         """
-        self.console.print(Panel(message, title=":information_source:", border_style="yellow"))
+        self.console.print(
+            Panel(message, title=":information_source:", border_style="yellow")
+        )
 
     def get_user_input(self) -> str:
         """Get user input from stdin.
@@ -191,16 +189,16 @@ class ChatUI:
             session: The session to display info for
         """
         info = Text()
-        info.append(f"Session ID: ", style="dim")
+        info.append("Session ID: ", style="dim")
         info.append(session.id[:8], style="bold")
         info.append(f"\nMessages: {len(session.messages)}", style="dim")
         info.append(f"\nCreated: {self._format_time(session.created_at)}", style="dim")
 
-        self.console.print(Panel(info, title=":file_folder: Session", border_style="blue"))
+        self.console.print(
+            Panel(info, title=":file_folder: Session", border_style="blue")
+        )
 
-    def display_sessions_list(
-        self, sessions: list[Session], current_id: str
-    ) -> None:
+    def display_sessions_list(self, sessions: list[Session], current_id: str) -> None:
         """Display a list of sessions.
 
         Args:
@@ -208,6 +206,7 @@ class ChatUI:
             current_id: ID of the current session
         """
         from rich.console import Group
+
         content = []
         for i, session in enumerate(sessions):
             prefix = ":arrow_right: " if session.id == current_id else "  "

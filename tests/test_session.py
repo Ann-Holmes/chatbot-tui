@@ -1,7 +1,6 @@
 import pytest
 import json
 from pathlib import Path
-from datetime import datetime
 import tempfile
 import shutil
 
@@ -42,11 +41,7 @@ class TestMessage:
 
     def test_message_from_dict(self):
         """Test creating message from dict."""
-        data = {
-            "role": "user",
-            "content": "Hello",
-            "timestamp": "2025-02-24T12:00:00"
-        }
+        data = {"role": "user", "content": "Hello", "timestamp": "2025-02-24T12:00:00"}
         msg = Message.from_dict(data)
         assert msg.role == "user"
         assert msg.content == "Hello"
@@ -94,7 +89,7 @@ class TestSession:
                 {"role": "user", "content": "Hello", "timestamp": "2025-02-24T12:00:00"}
             ],
             "created_at": "2025-02-24T12:00:00",
-            "system_prompt": None
+            "system_prompt": None,
         }
         session = Session.from_dict(data)
         assert session.id == "test-id"
@@ -137,8 +132,8 @@ class TestSessionManager:
     def test_list_sessions(self, session_manager):
         """Test listing sessions."""
         initial_count = len(session_manager.list_sessions())
-        s1 = session_manager.create_session()
-        s2 = session_manager.create_session()
+        session_manager.create_session()
+        session_manager.create_session()
         sessions = session_manager.list_sessions()
         assert len(sessions) == initial_count + 2
 
@@ -162,8 +157,7 @@ class TestSessionManager:
     def test_delete_current_session_promotes_new(self, session_manager):
         """Test deleting current session sets new current."""
         s1 = session_manager.create_session()
-        s2 = session_manager.create_session()
-        original_current = session_manager.current_session
+        session_manager.create_session()  # Create another session
         session_manager.current_session = s1
         session_manager.delete_session(s1.id)
         # Should promote to another session, not necessarily s2 since order matters
@@ -179,7 +173,7 @@ class TestSessionManager:
 
     def test_switch_to_session(self, session_manager):
         """Test switching to a different session."""
-        s1 = session_manager.create_session()
+        session_manager.create_session()
         s2 = session_manager.create_session()
         session_manager.switch_to_session(s2.id)
         assert session_manager.current_session == s2

@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import Mock, patch
 from openai.types.chat import ChatCompletionChunk
 
 from chatbot_tui.llm import LLMClient, LLMError
@@ -28,7 +28,7 @@ def mock_stream_response():
 @pytest.fixture
 def llm_client(mock_stream_response):
     """Create LLM client with mocked OpenAI."""
-    with patch('chatbot_tui.llm.AsyncOpenAI') as mock_openai:
+    with patch("chatbot_tui.llm.AsyncOpenAI") as mock_openai:
         mock_openai.return_value.chat.completions = mock_stream_response
         client = LLMClient(base_url="https://test.com", api_key="test-key")
         client._mock_openai = mock_openai
@@ -51,30 +51,31 @@ class TestLLMClient:
     def test_init_with_base_url_and_api_key(self, llm_client):
         """Test client initialization with base URL and API key."""
         llm_client._mock_openai.assert_called_once_with(
-            base_url="https://test.com",
-            api_key="test-key"
+            base_url="https://test.com", api_key="test-key"
         )
 
     def test_init_with_system_prompt(self, llm_client):
         """Test client initialization with system prompt."""
         system_prompt = "You are a helpful assistant."
-        with patch('chatbot_tui.llm.AsyncOpenAI') as mock_openai:
+        with patch("chatbot_tui.llm.AsyncOpenAI") as mock_openai:
             mock_openai.return_value.chat.completions = Mock()
             client = LLMClient(
                 base_url="https://test.com",
                 api_key="test-key",
-                system_prompt=system_prompt
+                system_prompt=system_prompt,
             )
             assert client.system_prompt == system_prompt
 
     @pytest.mark.asyncio
     async def test_chat_stream_success(self, llm_client):
         """Test successful streaming chat response."""
-        llm_client._mock_stream_response.set_chunks([
-            _create_chunk("Hello"),
-            _create_chunk(" world"),
-            _create_chunk("!", finish_reason="stop"),
-        ])
+        llm_client._mock_stream_response.set_chunks(
+            [
+                _create_chunk("Hello"),
+                _create_chunk(" world"),
+                _create_chunk("!", finish_reason="stop"),
+            ]
+        )
 
         messages = [{"role": "user", "content": "Hi"}]
         full_response = ""
@@ -99,9 +100,11 @@ class TestLLMClient:
             return await original_create(*args, **kwargs)
 
         llm_client._mock_stream_response.create = tracked_create
-        llm_client._mock_stream_response.set_chunks([
-            _create_chunk("OK", finish_reason="stop"),
-        ])
+        llm_client._mock_stream_response.set_chunks(
+            [
+                _create_chunk("OK", finish_reason="stop"),
+            ]
+        )
 
         messages = [{"role": "user", "content": "Hi"}]
         async for _ in llm_client.chat_stream(messages):
@@ -109,7 +112,7 @@ class TestLLMClient:
 
         # Check that system prompt was added
         assert call_tracker["kwargs"] is not None
-        sent_messages = call_tracker["kwargs"]['messages']
+        sent_messages = call_tracker["kwargs"]["messages"]
         assert sent_messages[0] == {"role": "system", "content": "You are helpful."}
         assert sent_messages[1] == messages[0]
 
@@ -146,9 +149,11 @@ class TestLLMClient:
     @pytest.mark.asyncio
     async def test_chat_stream_empty_content(self, llm_client):
         """Test handling of chunks with empty content."""
-        llm_client._mock_stream_response.set_chunks([
-            _create_chunk(None, finish_reason="stop"),
-        ])
+        llm_client._mock_stream_response.set_chunks(
+            [
+                _create_chunk(None, finish_reason="stop"),
+            ]
+        )
 
         messages = [{"role": "user", "content": "Hi"}]
         full_response = ""
@@ -161,13 +166,15 @@ class TestLLMClient:
     @pytest.mark.asyncio
     async def test_chat_stream_mixed_content(self, llm_client):
         """Test handling of chunks with mixed content and None."""
-        llm_client._mock_stream_response.set_chunks([
-            _create_chunk("Hello"),
-            _create_chunk(None),  # Should be skipped
-            _create_chunk(" World"),
-            _create_chunk(""),  # Empty string should be included
-            _create_chunk("!", finish_reason="stop"),
-        ])
+        llm_client._mock_stream_response.set_chunks(
+            [
+                _create_chunk("Hello"),
+                _create_chunk(None),  # Should be skipped
+                _create_chunk(" World"),
+                _create_chunk(""),  # Empty string should be included
+                _create_chunk("!", finish_reason="stop"),
+            ]
+        )
 
         messages = [{"role": "user", "content": "Hi"}]
         full_response = ""

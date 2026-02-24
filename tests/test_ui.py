@@ -1,6 +1,5 @@
 import pytest
-from datetime import datetime
-from unittest.mock import Mock, MagicMock, patch
+from unittest.mock import patch
 
 from chatbot_tui.ui import ChatUI
 from chatbot_tui.session import Message, Session
@@ -10,8 +9,10 @@ from chatbot_tui.session import Message, Session
 def chat_ui():
     """Create a ChatUI with a real console (for renderable objects)."""
     from rich.console import Console
+
     # Use a file console to avoid terminal issues in tests
     import io
+
     console = Console(file=io.StringIO(), width=100, force_terminal=True)
     return ChatUI(console=console)
 
@@ -49,7 +50,9 @@ class TestChatUI:
 
     def test_format_assistant_message_with_code(self, chat_ui):
         """Test formatting assistant message with code block."""
-        msg = Message(role="assistant", content="Here's code:\n```python\nprint('hello')\n```")
+        msg = Message(
+            role="assistant", content="Here's code:\n```python\nprint('hello')\n```"
+        )
         formatted = chat_ui._format_assistant_message(msg)
         # Should handle code blocks
         assert formatted is not None
@@ -102,13 +105,13 @@ class TestChatUI:
 
     def test_get_user_input_with_mock(self, chat_ui):
         """Test getting user input with mocked Prompt."""
-        with patch('chatbot_tui.ui.Prompt.ask', return_value="Hello"):
+        with patch("chatbot_tui.ui.Prompt.ask", return_value="Hello"):
             result = chat_ui.get_user_input()
             assert result == "Hello"
 
     def test_get_user_input_empty_with_mock(self, chat_ui):
         """Test getting empty user input with mocked Prompt."""
-        with patch('chatbot_tui.ui.Prompt.ask', return_value=""):
+        with patch("chatbot_tui.ui.Prompt.ask", return_value=""):
             result = chat_ui.get_user_input()
             assert result == ""
 
