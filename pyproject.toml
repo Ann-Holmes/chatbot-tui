@@ -1,0 +1,32 @@
+[project]
+name = "chatbot-tui"
+version = "0.1.0"
+description = "A TUI ChatBot built with Rich and OpenAI SDK"
+readme = "README.md"
+authors = [
+    { name = "zonglianghou@163.com", email = "EnderZ@sjtu.edu.cn" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "rich>=13.9.0",
+    "openai>=1.58.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=6.0.0",
+    "pytest-mock>=3.14.0",
+    "pytest-asyncio>=0.24.0",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
+[project.scripts]
+chatbot = "chatbot_tui.main:main"
+
+[build-system]
+requires = ["uv_build>=0.8.18,<0.9.0"]
+build-backend = "uv_build"
