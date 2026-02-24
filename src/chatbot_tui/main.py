@@ -13,11 +13,11 @@ from rich.console import Console
 from rich.live import Live
 
 
-def load_env_vars() -> tuple[str, str]:
+def load_env_vars() -> tuple[str, str, str]:
     """Load environment variables.
 
     Returns:
-        Tuple of (base_url, api_key)
+        Tuple of (base_url, api_key, model)
 
     Raises:
         ValueError: If required environment variables are not set
@@ -26,6 +26,7 @@ def load_env_vars() -> tuple[str, str]:
 
     base_url = os.getenv("OPENAI_BASE_URL")
     api_key = os.getenv("OPENAI_API_KEY")
+    model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
 
     if not base_url:
         raise ValueError(
@@ -39,7 +40,7 @@ def load_env_vars() -> tuple[str, str]:
             "Create a .env file with OPENAI_BASE_URL and OPENAI_API_KEY."
         )
 
-    return base_url, api_key
+    return base_url, api_key, model
 
 
 def handle_command(
@@ -113,40 +114,41 @@ async def run_chat_loop(
     """
     ui.display_welcome()
 
-    with Live(console=ui.console, refresh_per_second=4) as live:
-        while True:
-            # Update display
-            live.update(ui._render_conversation(session_manager.current_session))
+    while True:
+        # Display current conversation without Live context (static)
+        ui.console.print(ui._render_conversation(session_manager.current_session))
 
-            # Get user input
-            try:
-                user_input = ui.get_user_input()
-            except (EOFError, KeyboardInterrupt):
+        # Get user input (outside of Live context to avoid duplication)
+        try:
+            user_input = ui.get_user_input()
+        except (EOFError, KeyboardInterrupt):
+            break
+
+        # Handle empty input
+        if not user_input:
+            continue
+
+        # Handle commands
+        if user_input.startswith("/"):
+            parts = user_input[1:].split(maxsplit=1)
+            command = parts[0]
+            args = parts[1] if len(parts) > 1 else ""
+
+            should_exit = handle_command(command, args, session_manager, ui)
+            if should_exit:
                 break
+            continue
 
-            # Handle empty input
-            if not user_input:
-                continue
+        # Add user message to session
+        user_message = Message(role="user", content=user_input)
+        session_manager.current_session.add_message(user_message)
+        session_manager.save_session(session_manager.current_session)
 
-            # Handle commands
-            if user_input.startswith("/"):
-                parts = user_input[1:].split(maxsplit=1)
-                command = parts[0]
-                args = parts[1] if len(parts) > 1 else ""
+        # Stream assistant response with Live context
+        try:
+            ui.clear_streaming_content()
 
-                should_exit = handle_command(command, args, session_manager, ui)
-                if should_exit:
-                    break
-                continue
-
-            # Add user message to session
-            user_message = Message(role="user", content=user_input)
-            session_manager.current_session.add_message(user_message)
-            session_manager.save_session(session_manager.current_session)
-
-            # Stream assistant response
-            try:
-                ui.clear_streaming_content()
+            with Live(console=ui.console, refresh_per_second=4) as live:
                 live.update(
                     ui._render_conversation(
                         session_manager.current_session, streaming=True
@@ -176,10 +178,9 @@ async def run_chat_loop(
                 ui.clear_streaming_content()
                 live.update(ui._render_conversation(session_manager.current_session))
 
-            except LLMError as e:
-                ui.display_error(f"LLM error: {e}")
-                ui.clear_streaming_content()
-                live.update(ui._render_conversation(session_manager.current_session))
+        except LLMError as e:
+            ui.display_error(f"LLM error: {e}")
+            ui.clear_streaming_content()
 
 
 def main() -> int:
@@ -190,13 +191,13 @@ def main() -> int:
     """
     try:
         # Load environment variables
-        base_url, api_key = load_env_vars()
+        base_url, api_key, model = load_env_vars()
 
         # Initialize components
         console = Console()
         ui = ChatUI(console=console)
         session_manager = SessionManager()
-        llm_client = LLMClient(base_url=base_url, api_key=api_key)
+        llm_client = LLMClient(base_url=base_url, api_key=api_key, model=model)
 
         # Run the chat loop
         asyncio.run(run_chat_loop(llm_client, session_manager, ui))
